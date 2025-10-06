@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingCart, Sparkles } from 'lucide-react';
-import { Inventory } from '@/lib/types';
+import { Inventory, Item } from '@/lib/types';
 import { ITEMS } from '@/lib/equipment-data';
 import { formatNumber } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ interface ShopModalProps {
   onSell: (itemType: keyof Inventory, price: number) => void;
 }
 
-type ShopItem = (typeof ITEMS)['blessing'] & {
+type ShopItem = Item & {
   key: keyof Inventory;
   stock: number;
   canAfford: boolean;
