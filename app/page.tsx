@@ -255,9 +255,7 @@ export default function Home() {
       setConsecutiveFails(0);
       
       // 보상 지급
-      if (result.reward) {
-        setGold(prev => prev + result.reward.gold);
-      }
+      setGold(prev => prev + (result.reward?.gold ?? 0));
 
       // 레벨 업데이트
       setEquipment(prev => ({
