@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Equipment, EnhancementResult, Inventory, PlayerStats } from '@/lib/types';
+import { Equipment, EnhancementResult, Inventory, PlayerStats, StoredEquipment } from '@/lib/types';
 import { DEFAULT_SWORD } from '@/lib/equipment-data';
 import { 
   attemptEnhancement, 
@@ -21,7 +21,8 @@ import { ToastNotification } from '@/components/toast-notification';
 import { ProtectionConfirmModal } from '@/components/protection-confirm-modal';
 import { ItemSelector } from '@/components/item-selector';
 import { ShopModal } from '@/components/shop-modal';
-import { DollarSign, ShoppingBag } from 'lucide-react';
+import { StorageModal } from '@/components/storage-modal';
+import { DollarSign, ShoppingBag, Package } from 'lucide-react';
 
 export default function Home() {
   const [equipment, setEquipment] = useState<Equipment>(DEFAULT_SWORD);
@@ -55,6 +56,10 @@ export default function Home() {
   // 상점 모달 상태
   const [showShopModal, setShowShopModal] = useState(false);
 
+  // 보관함 상태
+  const [storage, setStorage] = useState<StoredEquipment[]>([]);
+  const [showStorageModal, setShowStorageModal] = useState(false);
+
   // 아이템 사용 상태
   const [useBlessing, setUseBlessing] = useState(false);
   const [useRestoration, setUseRestoration] = useState(false);
@@ -68,6 +73,9 @@ export default function Home() {
       setInventory(savedState.inventory);
       setStats(savedState.stats);
       setConsecutiveFails(savedState.consecutiveFails);
+      if (savedState.storage) {
+        setStorage(savedState.storage);
+      }
     }
   }, []);
 
@@ -79,8 +87,9 @@ export default function Home() {
       inventory,
       stats,
       consecutiveFails,
+      storage,
     });
-  }, [equipment, gold, inventory, stats, consecutiveFails]);
+  }, [equipment, gold, inventory, stats, consecutiveFails, storage]);
 
   // 스탯 계산
   useEffect(() => {
@@ -131,6 +140,51 @@ export default function Home() {
 
     showToastMessage(`${itemNames[itemType]}을(를) 구매했습니다!`, 'success');
   }, [gold, showToastMessage]);
+
+  // 장비 보관 함수
+  const handleStoreEquipment = useCallback(() => {
+    if (equipment.level === 0) {
+      showToastMessage('강화되지 않은 장비는 보관할 수 없습니다!', 'fail');
+      return;
+    }
+
+    const storedItem: StoredEquipment = {
+      id: `stored-${Date.now()}`,
+      equipment: { ...equipment },
+      storedAt: Date.now(),
+    };
+
+    setStorage(prev => [...prev, storedItem]);
+    setEquipment({ ...DEFAULT_SWORD, level: 0 });
+    setShowStorageModal(false);
+    showToastMessage(`${equipment.name} +${equipment.level}을(를) 보관했습니다!`, 'success');
+  }, [equipment, showToastMessage]);
+
+  // 보관함에서 장착
+  const handleEquipFromStorage = useCallback((storedItem: StoredEquipment) => {
+    // 현재 장비가 강화되어 있으면 보관
+    if (equipment.level > 0) {
+      const currentStored: StoredEquipment = {
+        id: `stored-${Date.now()}`,
+        equipment: { ...equipment },
+        storedAt: Date.now(),
+      };
+      setStorage(prev => [...prev.filter(item => item.id !== storedItem.id), currentStored]);
+    } else {
+      setStorage(prev => prev.filter(item => item.id !== storedItem.id));
+    }
+
+    setEquipment(storedItem.equipment);
+    showToastMessage(`${storedItem.equipment.name} +${storedItem.equipment.level}을(를) 장착했습니다!`, 'success');
+  }, [equipment, showToastMessage]);
+
+  // 보관함에서 판매
+  const handleSellFromStorage = useCallback((storedItem: StoredEquipment) => {
+    const sellPrice = Math.floor(storedItem.equipment.level * storedItem.equipment.level * 5000);
+    setGold(prev => prev + sellPrice);
+    setStorage(prev => prev.filter(item => item.id !== storedItem.id));
+    showToastMessage(`${storedItem.equipment.name} +${storedItem.equipment.level}을(를) ${sellPrice.toLocaleString()} 골드에 판매했습니다!`, 'info');
+  }, [showToastMessage]);
 
   // 아이템 판매 함수
   const handleSell = useCallback((itemType: keyof Inventory, price: number) => {
@@ -278,8 +332,20 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-white">⚔️ 강화 시뮬레이터</h1>
             <p className="text-sm text-gray-400">+{equipment.level} → +{equipment.level < 20 ? equipment.level + 1 : 20}</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <GoldDisplay gold={gold} />
+            <button
+              onClick={() => setShowStorageModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2 relative"
+            >
+              <Package className="w-4 h-4" />
+              보관함
+              {storage.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {storage.length}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setShowShopModal(true)}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2"
@@ -381,6 +447,17 @@ export default function Home() {
           inventory={inventory}
           onPurchase={handlePurchase}
           onSell={handleSell}
+        />
+
+        {/* 보관함 모달 */}
+        <StorageModal
+          isOpen={showStorageModal}
+          onClose={() => setShowStorageModal(false)}
+          storage={storage}
+          currentEquipment={equipment}
+          onEquip={handleEquipFromStorage}
+          onSell={handleSellFromStorage}
+          onStore={handleStoreEquipment}
         />
       </div>
     </main>

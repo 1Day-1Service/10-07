@@ -107,6 +107,13 @@ export interface LeaderboardEntry {
   timestamp: number;
 }
 
+// 보관된 장비
+export interface StoredEquipment {
+  id: string;
+  equipment: Equipment;
+  storedAt: number;
+}
+
 // 게임 상태
 export interface GameState {
   equipment: Equipment;
@@ -114,5 +121,6 @@ export interface GameState {
   inventory: Inventory;
   stats: PlayerStats;
   consecutiveFails: number;
+  storage: StoredEquipment[];
 }
 
