@@ -15,8 +15,15 @@ interface ShopModalProps {
   onSell: (itemType: keyof Inventory, price: number) => void;
 }
 
+type ShopItem = (typeof ITEMS)['blessing'] & {
+  key: keyof Inventory;
+  stock: number;
+  canAfford: boolean;
+  disabled?: boolean;
+};
+
 export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell }: ShopModalProps) {
-  const shopItems = [
+  const shopItems: ShopItem[] = [
     {
       key: 'blessing' as keyof Inventory,
       ...ITEMS.blessing,
@@ -87,13 +94,15 @@ export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell
 
             {/* 아이템 목록 */}
             <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
-              {shopItems.map((item) => (
+              {shopItems.map((item) => {
+                const isDisabled = item.disabled === true;
+                return (
                 <motion.div
                   key={item.id}
-                  whileHover={{ scale: item.disabled ? 1 : 1.02 }}
+                  whileHover={{ scale: isDisabled ? 1 : 1.02 }}
                   className={`
                     bg-gray-800/50 border-2 rounded-xl p-4
-                    ${item.disabled 
+                    ${isDisabled 
                       ? 'border-gray-700 opacity-50' 
                       : item.canAfford 
                         ? 'border-purple-500/50 hover:border-purple-500' 
@@ -107,7 +116,7 @@ export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell
                       <div>
                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                           {item.name}
-                          {item.disabled && (
+                          {isDisabled && (
                             <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">
                               효과 없음
                             </span>
@@ -135,11 +144,11 @@ export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => !item.disabled && onPurchase(item.key, item.price)}
-                          disabled={!item.canAfford || item.disabled}
+                          onClick={() => !isDisabled && onPurchase(item.key, item.price)}
+                          disabled={!item.canAfford || isDisabled}
                           className={`
                             px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-1 text-sm
-                            ${item.disabled
+                            ${isDisabled
                               ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                               : item.canAfford
                                 ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
@@ -151,11 +160,11 @@ export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell
                           구매
                         </button>
                         <button
-                          onClick={() => !item.disabled && onSell(item.key, item.price)}
-                          disabled={item.stock === 0 || item.disabled}
+                          onClick={() => !isDisabled && onSell(item.key, item.price)}
+                          disabled={item.stock === 0 || isDisabled}
                           className={`
                             px-4 py-2 rounded-lg font-semibold transition-all duration-200 text-sm
-                            ${item.disabled || item.stock === 0
+                            ${isDisabled || item.stock === 0
                               ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                               : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
                             }
@@ -167,7 +176,7 @@ export function ShopModal({ isOpen, onClose, gold, inventory, onPurchase, onSell
                     </div>
                   </div>
                 </motion.div>
-              ))}
+              )})}
             </div>
 
             {/* 푸터 */}
