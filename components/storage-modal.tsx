@@ -5,25 +5,23 @@ import { X, Package, Swords, DollarSign } from 'lucide-react';
 import { StoredEquipment, Equipment } from '@/lib/types';
 import { getEvolutionStage } from '@/lib/enhancement-logic';
 import { formatNumber } from '@/lib/utils';
+import Image from 'next/image';
+import { useState } from 'react';
 
 interface StorageModalProps {
   isOpen: boolean;
   onClose: () => void;
   storage: StoredEquipment[];
-  currentEquipment: Equipment;
   onEquip: (storedItem: StoredEquipment) => void;
   onSell: (storedItem: StoredEquipment) => void;
-  onStore: () => void;
 }
 
 export function StorageModal({
   isOpen,
   onClose,
   storage,
-  currentEquipment,
   onEquip,
   onSell,
-  onStore,
 }: StorageModalProps) {
   const getSellPrice = (equipment: Equipment) => {
     return Math.floor(equipment.level * equipment.level * 5000);
@@ -57,7 +55,7 @@ export function StorageModal({
                   <div>
                     <h2 className="text-2xl font-bold text-white">장비 보관함</h2>
                     <p className="text-sm text-blue-100">
-                      보관: {storage.length}개 / 현재: {currentEquipment.name} +{currentEquipment.level}
+                      보관된 장비: {storage.length}개
                     </p>
                   </div>
                 </div>
@@ -68,17 +66,6 @@ export function StorageModal({
                   <X className="w-6 h-6" />
                 </button>
               </div>
-
-              {/* 현재 장비 보관 버튼 */}
-              {currentEquipment.level > 0 && (
-                <button
-                  onClick={onStore}
-                  className="mt-4 w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Package className="w-5 h-5" />
-                  현재 장비 보관하기 ({currentEquipment.name} +{currentEquipment.level})
-                </button>
-              )}
             </div>
 
             {/* 보관함 목록 */}
@@ -105,14 +92,12 @@ export function StorageModal({
                         className="bg-gray-800/50 border-2 border-gray-700 rounded-xl p-4 hover:border-blue-500/50 transition-all"
                       >
                         <div className="flex items-center gap-4">
-                          {/* 무기 이미지/이모지 */}
-                          <div 
-                            className="text-4xl"
-                            style={{
-                              filter: `drop-shadow(0 0 10px ${stage.glowColor})`,
-                            }}
-                          >
-                            {stage.emoji}
+                          {/* 무기 이미지 */}
+                          <div className="relative w-16 h-16 flex items-center justify-center">
+                            <SwordImage 
+                              level={item.equipment.level}
+                              stage={stage}
+                            />
                           </div>
 
                           {/* 정보 */}
@@ -166,6 +151,43 @@ export function StorageModal({
         </div>
       )}
     </AnimatePresence>
+  );
+}
+
+// 검 이미지 컴포넌트
+function SwordImage({ level, stage }: { level: number; stage: any }) {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <>
+      {!imageError ? (
+        <motion.div
+          animate={{
+            filter: `drop-shadow(0 0 15px ${stage.glowColor})`,
+          }}
+          transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse' }}
+          className="relative w-full h-full"
+        >
+          <Image
+            src={`/swords/sword-${level}.jpg`}
+            alt={stage.name}
+            fill
+            className="object-contain"
+            onError={() => setImageError(true)}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          animate={{
+            filter: `drop-shadow(0 0 15px ${stage.glowColor})`,
+          }}
+          transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse' }}
+          className="text-3xl"
+        >
+          {stage.emoji}
+        </motion.div>
+      )}
+    </>
   );
 }
 

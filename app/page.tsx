@@ -392,13 +392,22 @@ export default function Home() {
 
             {/* 판매 버튼 */}
             {equipment.level > 0 && (
-              <button
-                onClick={handleSellEquipment}
-                className="w-full py-2 px-4 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-              >
-                <DollarSign className="w-4 h-4" />
-                판매 ({(equipment.level * equipment.level * 5000).toLocaleString()}G)
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSellEquipment}
+                  className="flex-1 py-2 px-4 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  판매 ({(equipment.level * equipment.level * 5000).toLocaleString()}G)
+                </button>
+                <button
+                  onClick={handleStoreEquipment}
+                  className="flex-1 py-2 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                >
+                  <Package className="w-4 h-4" />
+                  보관
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -454,10 +463,8 @@ export default function Home() {
           isOpen={showStorageModal}
           onClose={() => setShowStorageModal(false)}
           storage={storage}
-          currentEquipment={equipment}
           onEquip={handleEquipFromStorage}
           onSell={handleSellFromStorage}
-          onStore={handleStoreEquipment}
         />
       </div>
     </main>
